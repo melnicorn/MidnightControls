@@ -7,7 +7,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonInfo;
 import org.joml.Vector2i;
-import org.lwjgl.glfw.GLFW;
+import eu.midnightdust.midnightcontrols.client.util.KeyCodes;
 
 public class EmotecraftCompat {
     private static final Minecraft client = Minecraft.getInstance();
@@ -31,7 +31,7 @@ public class EmotecraftCompat {
                 InputManager.INPUT_MANAGER.updateMousePosition(client);
 
                 if (stickReleased) {
-                    ((MouseAccessor) client.mouseHandler).midnightcontrols$onMouseButton(client.getWindow().handle(), new MouseButtonInfo(GLFW.GLFW_MOUSE_BUTTON_LEFT, 0), GLFW.GLFW_PRESS);
+                    ((MouseAccessor) client.mouseHandler).midnightcontrols$onMouseButton(client.getWindow().handle(), new MouseButtonInfo(KeyCodes.MOUSE_BUTTON_LEFT, 0), KeyCodes.PRESS);
                     prevIndex = -1;
                 }
                 else prevIndex = index;

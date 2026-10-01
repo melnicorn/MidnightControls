@@ -21,6 +21,8 @@ import eu.midnightdust.midnightcontrols.client.controller.ButtonBinding;
 import eu.midnightdust.midnightcontrols.client.controller.ButtonCategory;
 import eu.midnightdust.midnightcontrols.client.controller.Controller;
 import eu.midnightdust.midnightcontrols.client.controller.InputManager;
+import eu.midnightdust.midnightcontrols.client.controller.backend.InputBackend;
+import eu.midnightdust.midnightcontrols.client.controller.backend.InputBackends;
 import eu.midnightdust.midnightcontrols.client.gui.MidnightControlsHud;
 import eu.midnightdust.midnightcontrols.client.gui.RingScreen;
 import eu.midnightdust.midnightcontrols.client.touch.gui.TouchscreenOverlay;
@@ -30,10 +32,10 @@ import eu.midnightdust.midnightcontrols.client.ring.MidnightRing;
 import eu.midnightdust.midnightcontrols.client.util.platform.NetworkUtil;
 import eu.midnightdust.midnightcontrols.client.virtualkeyboard.MouseClickInterceptor;
 import eu.midnightdust.midnightcontrols.client.touch.TouchInput;
+import eu.midnightdust.midnightcontrols.client.util.KeyCodes;
 import eu.midnightdust.midnightcontrols.packet.ControlsModePayload;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
 
 import java.io.File;
 import java.util.Timer;
@@ -57,13 +59,13 @@ public class MidnightControlsClient extends MidnightControls {
     public static boolean lateInitDone = false;
     public static final KeyMapping.Category MIDNIGHTCONTROLS_CATEGORY = KeyMapping.Category.register(Identifier.fromNamespaceAndPath("midnightcontrols", "keybinds"));
     public static final KeyMapping BINDING_LOOK_UP = InputManager.makeKeyBinding(id("look_up"),
-            InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_KP_8, MIDNIGHTCONTROLS_CATEGORY);
+            InputConstants.Type.KEYSYM, KeyCodes.KP_8, MIDNIGHTCONTROLS_CATEGORY);
     public static final KeyMapping BINDING_LOOK_RIGHT = InputManager.makeKeyBinding(id("look_right"),
-            InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_KP_6, MIDNIGHTCONTROLS_CATEGORY);
+            InputConstants.Type.KEYSYM, KeyCodes.KP_6, MIDNIGHTCONTROLS_CATEGORY);
     public static final KeyMapping BINDING_LOOK_DOWN = InputManager.makeKeyBinding(id("look_down"),
-            InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_KP_2, MIDNIGHTCONTROLS_CATEGORY);
+            InputConstants.Type.KEYSYM, KeyCodes.KP_2, MIDNIGHTCONTROLS_CATEGORY);
     public static final KeyMapping BINDING_LOOK_LEFT = InputManager.makeKeyBinding(id("look_left"),
-            InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_KP_4, MIDNIGHTCONTROLS_CATEGORY);
+            InputConstants.Type.KEYSYM, KeyCodes.KP_4, MIDNIGHTCONTROLS_CATEGORY);
     public static final KeyMapping BINDING_RING = InputManager.makeKeyBinding(id("ring"),
             InputConstants.Type.KEYSYM, InputConstants.UNKNOWN.getValue(), MIDNIGHTCONTROLS_CATEGORY);
     public static final Identifier CONTROLLER_BUTTONS = id("textures/gui/controller_buttons.png");
@@ -95,7 +97,8 @@ public class MidnightControlsClient extends MidnightControls {
             }
         }, delay, period);
 
-        isWayland = GLFW.glfwGetVersionString().contains("Wayland");
+        // Best effort: the SDL video driver may not be initialized yet at this point, so this is refreshed in onMcInit.
+        isWayland = InputBackends.get().isWayland();
     }
 
     /**
@@ -113,9 +116,17 @@ public class MidnightControlsClient extends MidnightControls {
             MidnightControlsConfig.write(MidnightControlsConstants.NAMESPACE);
         }
         MidnightControlsHud.isVisible = MidnightControlsConfig.hudEnable;
+        var backend = InputBackends.get();
+        MidnightControls.log("Using " + backend.name() + " input backend.");
+        try {
+            backend.init(); // The window exists now, so the platform's gamepad subsystem can be started.
+            isWayland = backend.isWayland();
+        } catch (Throwable e) {
+            MidnightControls.logger.error("Failed to initialize the " + backend.name() + " input backend", e);
+        }
         Controller.updateMappings();
         try {
-            GLFW.glfwSetJoystickCallback(MidnightControlsClient::onControllerConnectionChanged);
+            backend.setConnectionListener(MidnightControlsClient::onControllerConnectionChanged);
         } catch (Exception e) {
             e.fillInStackTrace();
         }
@@ -134,11 +145,11 @@ public class MidnightControlsClient extends MidnightControls {
     /**
      * This callback is executed every time a controller is connected or disconnected.
      */
-    private static void onControllerConnectionChanged(int jid, int event) {
-        if (event == GLFW.GLFW_CONNECTED) {
+    private static void onControllerConnectionChanged(int jid, boolean connected) {
+        if (connected) {
             var controller = Controller.byId(jid);
             showToastMessage(Component.translatable("midnightcontrols.controller.connected", jid), Component.literal(controller.getName()));
-        } else if (event == GLFW.GLFW_DISCONNECTED) {
+        } else {
             showToastMessage(Component.translatable("midnightcontrols.controller.disconnected", jid), null);
         }
 
@@ -183,6 +194,7 @@ public class MidnightControlsClient extends MidnightControls {
      */
     public static void onTick(@NotNull Minecraft client) {
         initKeybindings();
+        InputBackends.get().tick();
         input.tick();
         reacharound.tick();
         if (MidnightControlsConfig.controlsMode == ControlsMode.CONTROLLER && (client.isWindowActive() || MidnightControlsConfig.unfocusedInput))
@@ -233,8 +245,9 @@ public class MidnightControlsClient extends MidnightControls {
         }
 
         if (MidnightControlsConfig.hideNormalMouse) {
-            if (screen != null && !(screen instanceof TouchscreenOverlay)) GLFW.glfwSetInputMode(Minecraft.getInstance().getWindow().handle(), GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_HIDDEN);
-            else GLFW.glfwSetInputMode(Minecraft.getInstance().getWindow().handle(), GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_DISABLED);
+            long window = Minecraft.getInstance().getWindow().handle();
+            if (screen != null && !(screen instanceof TouchscreenOverlay)) InputBackends.get().setCursorMode(window, InputBackend.CursorMode.HIDDEN);
+            else InputBackends.get().setCursorMode(window, InputBackend.CursorMode.DISABLED);
         }
 
         original.call(screen);

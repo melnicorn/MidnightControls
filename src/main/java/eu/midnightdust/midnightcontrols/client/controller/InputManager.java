@@ -12,11 +12,11 @@ package eu.midnightdust.midnightcontrols.client.controller;
 import eu.midnightdust.midnightcontrols.ControlsMode;
 import eu.midnightdust.midnightcontrols.client.enums.ButtonState;
 import eu.midnightdust.midnightcontrols.client.MidnightControlsConfig;
-import eu.midnightdust.midnightcontrols.client.mixin.MouseAccessor;
+import eu.midnightdust.midnightcontrols.client.controller.backend.InputBackends;
+import eu.midnightdust.midnightcontrols.client.util.MouseUtil;
 import it.unimi.dsi.fastutil.ints.*;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
-import org.lwjgl.glfw.GLFW;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -84,8 +84,8 @@ public class InputManager {
             double mouseX = this.prevTargetMouseX + (this.targetMouseX - this.prevTargetMouseX) * client.getDeltaTracker().getGameTimeDeltaPartialTick(true) + 0.5;
             double mouseY = this.prevTargetMouseY + (this.targetMouseY - this.prevTargetMouseY) * client.getDeltaTracker().getGameTimeDeltaPartialTick(true) + 0.5;
             if (!MidnightControlsConfig.virtualMouse)
-                GLFW.glfwSetCursorPos(client.getWindow().handle(), mouseX, mouseY);
-            ((MouseAccessor) client.mouseHandler).midnightcontrols$onCursorPos(client.getWindow().handle(), mouseX, mouseY);
+                InputBackends.get().setCursorPos(client.getWindow().handle(), mouseX, mouseY);
+            MouseUtil.onCursorPos(client, mouseX, mouseY);
         }
     }
 

@@ -12,11 +12,10 @@ package eu.midnightdust.midnightcontrols.client.controller;
 import eu.midnightdust.midnightcontrols.MidnightControls;
 import eu.midnightdust.midnightcontrols.client.MidnightControlsClient;
 import eu.midnightdust.midnightcontrols.client.MidnightControlsConfig;
+import eu.midnightdust.midnightcontrols.client.controller.backend.GamepadState;
+import eu.midnightdust.midnightcontrols.client.controller.backend.InputBackend;
+import eu.midnightdust.midnightcontrols.client.controller.backend.InputBackends;
 import org.jetbrains.annotations.NotNull;
-import org.lwjgl.glfw.GLFW;
-import org.lwjgl.glfw.GLFWGamepadState;
-import org.lwjgl.system.MemoryStack;
-import org.lwjgl.system.MemoryUtil;
 
 import java.io.*;
 import java.net.URI;
@@ -36,13 +35,20 @@ import static org.lwjgl.BufferUtils.createByteBuffer;
 
 /**
  * Represents a controller.
+ * <p>
+ * The id is a stable slot in {@code 0..GamepadConstants.JOYSTICK_LAST} (GLFW joystick id semantics);
+ * platform access goes through the {@link InputBackend}.
  *
  * @author LambdAurora
- * @version 1.7.0
+ * @version 1.13.0
  * @since 1.0.0
  */
 public record Controller(int id) {
     private static final Map<Integer, Controller> CONTROLLERS = new HashMap<>();
+
+    private static @NotNull InputBackend backend() {
+        return InputBackends.get();
+    }
 
     /**
      * Gets the controller's globally unique identifier.
@@ -50,8 +56,7 @@ public record Controller(int id) {
      * @return the controller's GUID
      */
     public String getGuid() {
-        String guid = GLFW.glfwGetJoystickGUID(this.id);
-        return guid == null ? "" : guid;
+        return backend().getGuid(this.id);
     }
 
     /**
@@ -60,7 +65,7 @@ public record Controller(int id) {
      * @return true if this controller is connected, else false
      */
     public boolean isConnected() {
-        return GLFW.glfwJoystickPresent(this.id);
+        return backend().isConnected(this.id);
     }
 
     /**
@@ -69,7 +74,7 @@ public record Controller(int id) {
      * @return true if this controller is a gamepad, else false
      */
     public boolean isGamepad() {
-        return this.isConnected() && GLFW.glfwJoystickIsGamepad(this.id);
+        return this.isConnected() && backend().isGamepad(this.id);
     }
 
     /**
@@ -78,7 +83,7 @@ public record Controller(int id) {
      * @return the controller's name
      */
     public @NotNull String getName() {
-        var name = this.isGamepad() ? GLFW.glfwGetGamepadName(this.id) : GLFW.glfwGetJoystickName(this.id);
+        var name = backend().getName(this.id);
         return name == null ? String.valueOf(this.id()) : name;
     }
 
@@ -87,17 +92,16 @@ public record Controller(int id) {
      *
      * @return the state of the controller input
      */
-    public GLFWGamepadState getState() {
-        var state = GLFWGamepadState.create();
-        if (this.isGamepad())
-            GLFW.glfwGetGamepadState(this.id, state);
+    public GamepadState getState() {
+        var state = new GamepadState();
+        backend().readState(this.id, state);
         return state;
     }
 
     public static Controller byId(int id) {
-        if (id > GLFW.GLFW_JOYSTICK_LAST) {
+        if (id > GamepadConstants.JOYSTICK_LAST) {
             MidnightControls.log("Controller '" + id + "' doesn't exist.");
-            id = GLFW.GLFW_JOYSTICK_LAST;
+            id = GamepadConstants.JOYSTICK_LAST;
         }
         Controller controller;
         if (CONTROLLERS.containsKey(id))
@@ -151,31 +155,30 @@ public record Controller(int id) {
             Optional<File> databaseFile = getDatabaseFile();
             if (databaseFile.isPresent()) {
                 var database = ioResourceToBuffer(databaseFile.get().getPath());
-                if (database != null) GLFW.glfwUpdateGamepadMappings(database);
+                if (database != null && !backend().addMappings(database))
+                    MidnightControls.warn("Failed to load the controller database.");
             }
             if (!MidnightControlsClient.MAPPINGS_FILE.exists())
                 return false;
             var buffer = ioResourceToBuffer(MidnightControlsClient.MAPPINGS_FILE.getPath());
-            if (buffer != null) GLFW.glfwUpdateGamepadMappings(buffer);
+            if (buffer != null && !backend().addMappings(buffer))
+                MidnightControls.warn("Failed to load the custom controller mappings.");
         } catch (IOException e) {
             e.fillInStackTrace();
         }
 
-        try (var memoryStack = MemoryStack.stackPush()) {
-            var pointerBuffer = memoryStack.mallocPointer(1);
-            int i = GLFW.glfwGetError(pointerBuffer);
-            if (i != 0) {
-                long l = pointerBuffer.get();
-                var string = l == 0L ? "" : MemoryUtil.memUTF8(l);
-                showToastMessage(Component.translatable("midnightcontrols.controller.mappings.error"), Component.literal(string));
-                MidnightControls.log(I18n.get("midnightcontrols.controller.mappings.error")+string);
+        try {
+            var error = backend().pollError();
+            if (error != null) {
+                showToastMessage(Component.translatable("midnightcontrols.controller.mappings.error"), Component.literal(error));
+                MidnightControls.log(I18n.get("midnightcontrols.controller.mappings.error") + error);
             }
         } catch (Throwable e) {
             /* Ignored :concern: */
         }
 
         if (MidnightControlsConfig.debug) {
-            for (int i = GLFW.GLFW_JOYSTICK_1; i <= GLFW.GLFW_JOYSTICK_16; i++) {
+            for (int i = GamepadConstants.JOYSTICK_1; i <= GamepadConstants.JOYSTICK_LAST; i++) {
                 var controller = byId(i);
 
                 if (!controller.isConnected())

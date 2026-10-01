@@ -19,7 +19,7 @@ import eu.midnightdust.midnightcontrols.client.MidnightControlsClient;
 import eu.midnightdust.midnightcontrols.client.MidnightControlsConfig;
 import eu.midnightdust.midnightcontrols.client.controller.ButtonBinding;
 import org.jetbrains.annotations.NotNull;
-import org.lwjgl.glfw.GLFW;
+import eu.midnightdust.midnightcontrols.client.controller.GamepadConstants;
 
 /**
  * Represents the midnightcontrols renderer.
@@ -37,10 +37,10 @@ public class MidnightControlsRenderer {
     public static int getButtonSize(int button) {
         return switch (button) {
             case -1 -> 0;
-            case GLFW.GLFW_GAMEPAD_AXIS_LEFT_X + 100, GLFW.GLFW_GAMEPAD_AXIS_LEFT_X + 200,
-                    GLFW.GLFW_GAMEPAD_AXIS_LEFT_Y + 100, GLFW.GLFW_GAMEPAD_AXIS_LEFT_Y + 200,
-                    GLFW.GLFW_GAMEPAD_AXIS_RIGHT_X + 100, GLFW.GLFW_GAMEPAD_AXIS_RIGHT_X + 200,
-                    GLFW.GLFW_GAMEPAD_AXIS_RIGHT_Y + 100, GLFW.GLFW_GAMEPAD_AXIS_RIGHT_Y + 200 -> AXIS_SIZE;
+            case GamepadConstants.AXIS_LEFT_X + 100, GamepadConstants.AXIS_LEFT_X + 200,
+                    GamepadConstants.AXIS_LEFT_Y + 100, GamepadConstants.AXIS_LEFT_Y + 200,
+                    GamepadConstants.AXIS_RIGHT_X + 100, GamepadConstants.AXIS_RIGHT_X + 200,
+                    GamepadConstants.AXIS_RIGHT_Y + 100, GamepadConstants.AXIS_RIGHT_Y + 200 -> AXIS_SIZE;
             default -> BUTTON_SIZE;
         };
     }
@@ -111,47 +111,47 @@ public class MidnightControlsRenderer {
             case 16 -> buttonOffset = 18;
             case 17 -> buttonOffset = 36;
             case 18 -> buttonOffset = 54;
-            case GLFW.GLFW_GAMEPAD_BUTTON_LEFT_BUMPER -> buttonOffset = 7 * 15;
-            case GLFW.GLFW_GAMEPAD_BUTTON_RIGHT_BUMPER -> buttonOffset = 8 * 15;
-            case GLFW.GLFW_GAMEPAD_BUTTON_BACK -> buttonOffset = 4 * 15;
-            case GLFW.GLFW_GAMEPAD_BUTTON_START -> buttonOffset = 6 * 15;
-            case GLFW.GLFW_GAMEPAD_BUTTON_GUIDE -> buttonOffset = 5 * 15;
-            case GLFW.GLFW_GAMEPAD_BUTTON_LEFT_THUMB -> buttonOffset = 15 * 15;
-            case GLFW.GLFW_GAMEPAD_BUTTON_RIGHT_THUMB -> buttonOffset = 16 * 15;
-            case GLFW.GLFW_GAMEPAD_AXIS_LEFT_X + 100 -> {
+            case GamepadConstants.BUTTON_LEFT_BUMPER -> buttonOffset = 7 * 15;
+            case GamepadConstants.BUTTON_RIGHT_BUMPER -> buttonOffset = 8 * 15;
+            case GamepadConstants.BUTTON_BACK -> buttonOffset = 4 * 15;
+            case GamepadConstants.BUTTON_START -> buttonOffset = 6 * 15;
+            case GamepadConstants.BUTTON_GUIDE -> buttonOffset = 5 * 15;
+            case GamepadConstants.BUTTON_LEFT_THUMB -> buttonOffset = 15 * 15;
+            case GamepadConstants.BUTTON_RIGHT_THUMB -> buttonOffset = 16 * 15;
+            case GamepadConstants.AXIS_LEFT_X + 100 -> {
                 buttonOffset = 0;
                 axis = true;
             }
-            case GLFW.GLFW_GAMEPAD_AXIS_LEFT_Y + 100 -> {
+            case GamepadConstants.AXIS_LEFT_Y + 100 -> {
                 buttonOffset = 18;
                 axis = true;
             }
-            case GLFW.GLFW_GAMEPAD_AXIS_RIGHT_X + 100 -> {
+            case GamepadConstants.AXIS_RIGHT_X + 100 -> {
                 buttonOffset = 2 * 18;
                 axis = true;
             }
-            case GLFW.GLFW_GAMEPAD_AXIS_RIGHT_Y + 100 -> {
+            case GamepadConstants.AXIS_RIGHT_Y + 100 -> {
                 buttonOffset = 3 * 18;
                 axis = true;
             }
-            case GLFW.GLFW_GAMEPAD_AXIS_LEFT_X + 200 -> {
+            case GamepadConstants.AXIS_LEFT_X + 200 -> {
                 buttonOffset = 4 * 18;
                 axis = true;
             }
-            case GLFW.GLFW_GAMEPAD_AXIS_LEFT_Y + 200 -> {
+            case GamepadConstants.AXIS_LEFT_Y + 200 -> {
                 buttonOffset = 5 * 18;
                 axis = true;
             }
-            case GLFW.GLFW_GAMEPAD_AXIS_RIGHT_X + 200 -> {
+            case GamepadConstants.AXIS_RIGHT_X + 200 -> {
                 buttonOffset = 6 * 18;
                 axis = true;
             }
-            case GLFW.GLFW_GAMEPAD_AXIS_RIGHT_Y + 200 -> {
+            case GamepadConstants.AXIS_RIGHT_Y + 200 -> {
                 buttonOffset = 7 * 18;
                 axis = true;
             }
-            case GLFW.GLFW_GAMEPAD_AXIS_LEFT_TRIGGER + 100, GLFW.GLFW_GAMEPAD_AXIS_LEFT_TRIGGER + 200 -> buttonOffset = 9 * 15;
-            case GLFW.GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER + 100, GLFW.GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER + 200 -> buttonOffset = 10 * 15;
+            case GamepadConstants.AXIS_LEFT_TRIGGER + 100, GamepadConstants.AXIS_LEFT_TRIGGER + 200 -> buttonOffset = 9 * 15;
+            case GamepadConstants.AXIS_RIGHT_TRIGGER + 100, GamepadConstants.AXIS_RIGHT_TRIGGER + 200 -> buttonOffset = 10 * 15;
         }
 
         int assetSize = axis || (button >= 15 && button <= 18) ? AXIS_SIZE : BUTTON_SIZE;

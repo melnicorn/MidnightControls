@@ -40,7 +40,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.Util;
-import org.lwjgl.glfw.GLFW;
+import eu.midnightdust.midnightcontrols.client.controller.GamepadConstants;
 
 /**
  * Represents the midnightcontrols settings screen.
@@ -84,8 +84,8 @@ public class MidnightControlsSettingsScreen extends SpruceScreen {
                     amount -> {
                         int id = MidnightControlsConfig.getController().id();
                         id += amount;
-                        if (id > GLFW.GLFW_JOYSTICK_LAST)
-                            id = GLFW.GLFW_JOYSTICK_1;
+                        if (id > GamepadConstants.JOYSTICK_LAST)
+                            id = GamepadConstants.JOYSTICK_1;
                         id = searchNextAvailableController(id, false);
                         MidnightControlsConfig.setController(Controller.byId(id));
                         if (MidnightControlsConfig.debug) System.out.println(Controller.byId(id).getName() + "'s Controller GUID: " + Controller.byId(id).getGuid());
@@ -104,7 +104,7 @@ public class MidnightControlsSettingsScreen extends SpruceScreen {
             amount -> {
                 int id = MidnightControlsConfig.getSecondController().map(Controller::id).orElse(-1);
                 id += amount;
-                if (id > GLFW.GLFW_JOYSTICK_LAST)
+                if (id > GamepadConstants.JOYSTICK_LAST)
                     id = -1;
                 id = searchNextAvailableController(id, true);
                 MidnightControlsConfig.setSecondController(id == -1 ? null : Controller.byId(id));
@@ -127,10 +127,10 @@ public class MidnightControlsSettingsScreen extends SpruceScreen {
     private final SpruceOption rightDeadZoneOption;
     private final SpruceOption leftDeadZoneOption;
     private final SpruceOption[] maxAnalogValueOptions = new SpruceOption[]{
-            maxAnalogValueOption("midnightcontrols.menu.max_left_x_value", GLFW.GLFW_GAMEPAD_AXIS_LEFT_X),
-            maxAnalogValueOption("midnightcontrols.menu.max_left_y_value", GLFW.GLFW_GAMEPAD_AXIS_LEFT_Y),
-            maxAnalogValueOption("midnightcontrols.menu.max_right_x_value", GLFW.GLFW_GAMEPAD_AXIS_RIGHT_X),
-            maxAnalogValueOption("midnightcontrols.menu.max_right_y_value", GLFW.GLFW_GAMEPAD_AXIS_RIGHT_Y)
+            maxAnalogValueOption("midnightcontrols.menu.max_left_x_value", GamepadConstants.AXIS_LEFT_X),
+            maxAnalogValueOption("midnightcontrols.menu.max_left_y_value", GamepadConstants.AXIS_LEFT_Y),
+            maxAnalogValueOption("midnightcontrols.menu.max_right_x_value", GamepadConstants.AXIS_RIGHT_X),
+            maxAnalogValueOption("midnightcontrols.menu.max_right_y_value", GamepadConstants.AXIS_RIGHT_Y)
     };
     // Controller options
     public final static SpruceOption virtualKeyboardLayoutOption =
@@ -172,8 +172,8 @@ public class MidnightControlsSettingsScreen extends SpruceScreen {
             newId++;
         }
 
-        if (newId > GLFW.GLFW_JOYSTICK_LAST)
-            newId = allowNone ? -1 : GLFW.GLFW_JOYSTICK_1;
+        if (newId > GamepadConstants.JOYSTICK_LAST)
+            newId = allowNone ? -1 : GamepadConstants.JOYSTICK_1;
 
         return connected ? newId : searchNextAvailableController(newId, allowNone);
     }

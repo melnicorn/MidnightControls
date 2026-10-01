@@ -6,7 +6,6 @@ import eu.midnightdust.lib.config.MidnightConfigListWidget;
 import eu.midnightdust.lib.config.MidnightConfigScreen;
 import eu.midnightdust.midnightcontrols.client.MidnightControlsConfig;
 import eu.midnightdust.midnightcontrols.client.controller.Controller;
-import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
 import net.minecraft.ChatFormatting;
@@ -15,6 +14,7 @@ import net.minecraft.client.gui.components.SpriteIconButton;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import eu.midnightdust.midnightcontrols.client.controller.GamepadConstants;
 
 import static eu.midnightdust.midnightcontrols.client.gui.MidnightControlsSettingsScreen.searchNextAvailableController;
 
@@ -30,8 +30,8 @@ public class ControllerSelectionButton {
                 button -> {
                     int id = second ? MidnightControlsConfig.getSecondController().map(Controller::id).orElse(-1) : MidnightControlsConfig.getController().id();
                     id += 1;
-                    if (id > GLFW.GLFW_JOYSTICK_LAST)
-                        id = GLFW.GLFW_JOYSTICK_1;
+                    if (id > GamepadConstants.JOYSTICK_LAST)
+                        id = GamepadConstants.JOYSTICK_1;
                     id = searchNextAvailableController(id, second);
                     if (second) {
                         MidnightControlsConfig.setSecondController(Controller.byId(id));

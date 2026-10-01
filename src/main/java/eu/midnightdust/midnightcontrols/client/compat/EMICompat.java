@@ -8,7 +8,6 @@ import eu.midnightdust.midnightcontrols.client.MidnightInput;
 import eu.midnightdust.midnightcontrols.client.controller.ButtonBinding;
 import eu.midnightdust.midnightcontrols.client.controller.ButtonCategory;
 import eu.midnightdust.midnightcontrols.client.controller.InputManager;
-import org.lwjgl.glfw.GLFW;
 
 import static eu.midnightdust.midnightcontrols.MidnightControls.id;
 
@@ -27,13 +26,13 @@ public class EMICompat implements CompatHandler {
         ButtonCategory category = new ButtonCategory(id("category.emi"));
         InputManager.registerCategory(category);
 //        new ButtonBinding.Builder("emi_page_left")
-//                .buttons(GLFW.GLFW_GAMEPAD_BUTTON_LEFT_BUMPER, ButtonBinding.axisAsButton(GLFW.GLFW_GAMEPAD_AXIS_LEFT_TRIGGER, true))
+//                .buttons(GamepadConstants.BUTTON_LEFT_BUMPER, ButtonBinding.axisAsButton(GamepadConstants.AXIS_LEFT_TRIGGER, true))
 //                .category(category)
 //                .action((client,action,value,buttonState)->handleEmiPages(false)).cooldown()
 //                .filter(((buttonBinding) -> EmiApi.getHandledScreen() != null))
 //                .register();
 //        new ButtonBinding.Builder("emi_page_right")
-//                .buttons(GLFW.GLFW_GAMEPAD_BUTTON_RIGHT_BUMPER, ButtonBinding.axisAsButton(GLFW.GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER, true))
+//                .buttons(GamepadConstants.BUTTON_RIGHT_BUMPER, ButtonBinding.axisAsButton(GamepadConstants.AXIS_RIGHT_TRIGGER, true))
 //                .category(category)
 //                .action((client,action,value,buttonState)->handleEmiPages(true)).cooldown()
 //                .filter(((buttonBinding) -> EmiApi.getHandledScreen() != null))

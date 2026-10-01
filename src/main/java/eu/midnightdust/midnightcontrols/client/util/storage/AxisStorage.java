@@ -3,14 +3,14 @@ package eu.midnightdust.midnightcontrols.client.util.storage;
 import eu.midnightdust.midnightcontrols.client.MidnightControlsConfig;
 import eu.midnightdust.midnightcontrols.client.controller.ButtonBinding;
 import eu.midnightdust.midnightcontrols.client.enums.ButtonState;
-import org.lwjgl.glfw.GLFW;
+import eu.midnightdust.midnightcontrols.client.controller.GamepadConstants;
 
 import static eu.midnightdust.midnightcontrols.client.MidnightInput.BUTTON_COOLDOWNS;
 import static eu.midnightdust.midnightcontrols.client.controller.InputManager.STATES;
-import static org.lwjgl.glfw.GLFW.GLFW_GAMEPAD_AXIS_LEFT_TRIGGER;
-import static org.lwjgl.glfw.GLFW.GLFW_GAMEPAD_AXIS_LEFT_X;
-import static org.lwjgl.glfw.GLFW.GLFW_GAMEPAD_AXIS_LEFT_Y;
-import static org.lwjgl.glfw.GLFW.GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER;
+import static eu.midnightdust.midnightcontrols.client.controller.GamepadConstants.AXIS_LEFT_TRIGGER;
+import static eu.midnightdust.midnightcontrols.client.controller.GamepadConstants.AXIS_LEFT_X;
+import static eu.midnightdust.midnightcontrols.client.controller.GamepadConstants.AXIS_LEFT_Y;
+import static eu.midnightdust.midnightcontrols.client.controller.GamepadConstants.AXIS_RIGHT_TRIGGER;
 
 /**
  * Stores information about the current axis state
@@ -105,12 +105,12 @@ public class AxisStorage {
     }
 
     public static boolean isLeftAxis(int axis) {
-        return axis == GLFW_GAMEPAD_AXIS_LEFT_X || axis == GLFW_GAMEPAD_AXIS_LEFT_Y || axis == GLFW_GAMEPAD_AXIS_LEFT_TRIGGER;
+        return axis == AXIS_LEFT_X || axis == AXIS_LEFT_Y || axis == AXIS_LEFT_TRIGGER;
     }
 
     public static boolean isTrigger(int axis) {
-        return axis == GLFW_GAMEPAD_AXIS_LEFT_TRIGGER || axis == GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER ||
-               axis == ButtonBinding.controller2Button(GLFW.GLFW_GAMEPAD_AXIS_LEFT_TRIGGER) || axis == ButtonBinding.controller2Button(GLFW.GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER);
+        return axis == AXIS_LEFT_TRIGGER || axis == AXIS_RIGHT_TRIGGER ||
+               axis == ButtonBinding.controller2Button(GamepadConstants.AXIS_LEFT_TRIGGER) || axis == ButtonBinding.controller2Button(GamepadConstants.AXIS_RIGHT_TRIGGER);
     }
 
     public enum Polarity {

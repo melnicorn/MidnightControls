@@ -44,9 +44,9 @@ import eu.midnightdust.midnightcontrols.client.ring.RingPage;
 import eu.midnightdust.midnightcontrols.client.util.HandledScreenAccessor;
 import eu.midnightdust.midnightcontrols.client.util.MathUtil;
 import eu.midnightdust.midnightcontrols.client.enums.ButtonState;
+import eu.midnightdust.midnightcontrols.client.controller.backend.GamepadState;
+import eu.midnightdust.midnightcontrols.client.util.MouseUtil;
 import org.jetbrains.annotations.NotNull;
-import org.lwjgl.glfw.GLFW;
-import org.lwjgl.glfw.GLFWGamepadState;
 
 import java.util.HashMap;
 import java.util.List;
@@ -73,9 +73,11 @@ import net.minecraft.client.input.MouseButtonInfo;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.vehicle.boat.Boat;
+import eu.midnightdust.midnightcontrols.client.controller.GamepadConstants;
+import eu.midnightdust.midnightcontrols.client.util.KeyCodes;
 
 import static eu.midnightdust.midnightcontrols.client.MidnightControlsClient.client;
-import static org.lwjgl.glfw.GLFW.*;
+import static eu.midnightdust.midnightcontrols.client.controller.GamepadConstants.*;
 
 /**
  * Represents the MidnightControls input handler.
@@ -87,7 +89,7 @@ import static org.lwjgl.glfw.GLFW.*;
 //~ if >= 26.2 'client.screen' -> 'client.gui.screen()' {
 public class MidnightInput {
     public static final Map<Integer, Integer> BUTTON_COOLDOWNS = new HashMap<>();
-    public static final KeyEvent ENTER_KEY_INPUT = new KeyEvent(GLFW_KEY_ENTER, 0, 0);
+    public static final KeyEvent ENTER_KEY_INPUT = new KeyEvent(KeyCodes.ENTER, 0, 0);
     // Cooldowns
     public int actionGuiCooldown = 0;
     public int joystickCooldown = 0;
@@ -115,14 +117,14 @@ public class MidnightInput {
 
         // Handles the key bindings.
         if (MidnightControlsClient.BINDING_LOOK_UP.isDown()) {
-            this.handleFlatLook(AxisStorage.of(GLFW_GAMEPAD_AXIS_RIGHT_Y, -0.8F, 0d));
+            this.handleFlatLook(AxisStorage.of(AXIS_RIGHT_Y, -0.8F, 0d));
         } else if (MidnightControlsClient.BINDING_LOOK_DOWN.isDown()) {
-            this.handleFlatLook(AxisStorage.of(GLFW_GAMEPAD_AXIS_RIGHT_Y, 0.8F, 0d));
+            this.handleFlatLook(AxisStorage.of(AXIS_RIGHT_Y, 0.8F, 0d));
         }
         if (MidnightControlsClient.BINDING_LOOK_LEFT.isDown()) {
-            this.handleFlatLook(AxisStorage.of(GLFW_GAMEPAD_AXIS_RIGHT_X, -0.8F, 0d));
+            this.handleFlatLook(AxisStorage.of(AXIS_RIGHT_X, -0.8F, 0d));
         } else if (MidnightControlsClient.BINDING_LOOK_RIGHT.isDown()) {
-            this.handleFlatLook(AxisStorage.of(GLFW_GAMEPAD_AXIS_RIGHT_X, 0.8F, 0d));
+            this.handleFlatLook(AxisStorage.of(AXIS_RIGHT_X, 0.8F, 0d));
         }
 
         InputManager.INPUT_MANAGER.tick();
@@ -244,7 +246,7 @@ public class MidnightInput {
             this.mouseSpeedX = this.mouseSpeedY = 0.0F;
             InputManager.INPUT_MANAGER.resetMousePosition(windowWidth, windowHeight);
         } else if (isScreenInteractive(client.gui.screen()) && MidnightControlsConfig.virtualMouse) {
-            ((MouseAccessor) client.mouseHandler).midnightcontrols$onCursorPos(client.getWindow().handle(), 0, 0);
+            MouseUtil.onCursorPos(client, 0, 0);
             InputManager.INPUT_MANAGER.resetMouseTarget(client);
         }
         this.inventoryInteractionCooldown = 5;
@@ -258,11 +260,11 @@ public class MidnightInput {
         }
     }
 
-    private void fetchButtonInput(@NotNull GLFWGamepadState gamepadState, boolean leftJoycon) {
-        var buffer = gamepadState.buttons();
-        for (int i = 0; i < buffer.limit(); i++) {
+    private void fetchButtonInput(@NotNull GamepadState gamepadState, boolean leftJoycon) {
+        var buttons = gamepadState.buttons;
+        for (int i = 0; i < buttons.length; i++) {
             int btn = leftJoycon ? ButtonBinding.controller2Button(i) : i;
-            boolean pressed = buffer.get() == (byte) 1;
+            boolean pressed = buttons[i];
             var state = ButtonState.NONE;
             var previousState = InputManager.STATES.getOrDefault(btn, ButtonState.NONE);
 
@@ -284,35 +286,35 @@ public class MidnightInput {
     }
     final MathUtil.PolarUtil polarUtil = new MathUtil.PolarUtil();
 
-    private void fetchJoystickInput(@NotNull GLFWGamepadState gamepadState, boolean leftJoycon, boolean cameraTick) {
-        var buffer = gamepadState.axes();
+    private void fetchJoystickInput(@NotNull GamepadState gamepadState, boolean leftJoycon, boolean cameraTick) {
+        var axes = gamepadState.axes;
 
-        polarUtil.calculate(buffer.get(GLFW_GAMEPAD_AXIS_LEFT_X), buffer.get(GLFW_GAMEPAD_AXIS_LEFT_Y), 1, MidnightControlsConfig.leftDeadZone);
+        polarUtil.calculate(axes[AXIS_LEFT_X], axes[AXIS_LEFT_Y], 1, MidnightControlsConfig.leftDeadZone);
         float leftX = polarUtil.polarX;
         float leftY = polarUtil.polarY;
-        polarUtil.calculate(buffer.get(GLFW_GAMEPAD_AXIS_RIGHT_X), buffer.get(GLFW_GAMEPAD_AXIS_RIGHT_Y), 1, MidnightControlsConfig.rightDeadZone);
+        polarUtil.calculate(axes[AXIS_RIGHT_X], axes[AXIS_RIGHT_Y], 1, MidnightControlsConfig.rightDeadZone);
         float rightX = polarUtil.polarX;
         float rightY = polarUtil.polarY;
 
         boolean isRadialMenu = client.gui.screen() instanceof RingScreen || (PlatformFunctions.isModLoaded("emotecraft") && EmotecraftCompat.isEmotecraftScreen(client.gui.screen()));
 
         if (!isRadialMenu) {
-            for (int i = cameraTick ? GLFW_GAMEPAD_AXIS_RIGHT_X : 0; i < (cameraTick ? GLFW_GAMEPAD_AXIS_LEFT_TRIGGER : GLFW_GAMEPAD_AXIS_RIGHT_X); i++) {
+            for (int i = cameraTick ? AXIS_RIGHT_X : 0; i < (cameraTick ? AXIS_LEFT_TRIGGER : AXIS_RIGHT_X); i++) {
                 int axis = leftJoycon ? ButtonBinding.controller2Button(i) : i;
-                float value = buffer.get(i);
+                float value = axes[i];
 
                 switch (i) {
-                    case GLFW_GAMEPAD_AXIS_LEFT_X -> {
+                    case AXIS_LEFT_X -> {
                         if (MidnightControlsConfig.isAnalogMovementAllowed()) value = leftX;
                     }
-                    case GLFW_GAMEPAD_AXIS_LEFT_Y -> {
+                    case AXIS_LEFT_Y -> {
                         if (MidnightControlsConfig.isAnalogMovementAllowed()) value = leftY;
                     }
-                    case GLFW_GAMEPAD_AXIS_RIGHT_X -> value = rightX;
-                    case GLFW_GAMEPAD_AXIS_RIGHT_Y -> value = rightY;
+                    case AXIS_RIGHT_X -> value = rightX;
+                    case AXIS_RIGHT_Y -> value = rightY;
                 }
 
-                if (i == GLFW.GLFW_GAMEPAD_AXIS_LEFT_Y)
+                if (i == GamepadConstants.AXIS_LEFT_Y)
                     value *= -1.0F;
 
                 this.handleJoystickAxis(AxisStorage.of(axis, value));
@@ -324,12 +326,12 @@ public class MidnightInput {
         }
     }
 
-    private void fetchTriggerInput(@NotNull GLFWGamepadState gamepadState, boolean leftJoycon) {
-        var buffer = gamepadState.axes();
+    private void fetchTriggerInput(@NotNull GamepadState gamepadState, boolean leftJoycon) {
+        var axes = gamepadState.axes;
 
-        for (int i = GLFW_GAMEPAD_AXIS_LEFT_TRIGGER; i <= GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER; i++) {
+        for (int i = AXIS_LEFT_TRIGGER; i <= AXIS_RIGHT_TRIGGER; i++) {
             int axis = leftJoycon ? ButtonBinding.controller2Button(i) : i;
-            float value = buffer.get(i);
+            float value = axes[i];
 
             this.handleTriggerAxis(AxisStorage.of(axis, value, MidnightControlsConfig.triggerDeadZone));
         }
@@ -352,32 +354,32 @@ public class MidnightInput {
             return;
         }
 
-        if (client.gui.screen() != null && storage.state.isPressed() && storage.button == GLFW_GAMEPAD_BUTTON_Y &&
+        if (client.gui.screen() != null && storage.state.isPressed() && storage.button == BUTTON_Y &&
                 MidnightControlsConfig.arrowScreens.contains(client.gui.screen().getClass().getCanonicalName())) {
-            pressKeyboardKey(client, GLFW.GLFW_KEY_ENTER);
+            pressKeyboardKey(client, KeyCodes.ENTER);
             this.screenCloseCooldown = 5;
         }
         else if (storage.state.isPressed()) {
             if (client.gui.screen() != null && storage.isDpad() && this.actionGuiCooldown == 0) {
                 switch (storage.button) {
-                    case GLFW_GAMEPAD_BUTTON_DPAD_UP -> this.changeFocus(client.gui.screen(), ScreenDirection.UP);
-                    case GLFW_GAMEPAD_BUTTON_DPAD_DOWN -> this.changeFocus(client.gui.screen(), ScreenDirection.DOWN);
-                    case GLFW_GAMEPAD_BUTTON_DPAD_LEFT -> this.handleLeftRight(client.gui.screen(), false);
-                    case GLFW_GAMEPAD_BUTTON_DPAD_RIGHT -> this.handleLeftRight(client.gui.screen(), true);
+                    case BUTTON_DPAD_UP -> this.changeFocus(client.gui.screen(), ScreenDirection.UP);
+                    case BUTTON_DPAD_DOWN -> this.changeFocus(client.gui.screen(), ScreenDirection.DOWN);
+                    case BUTTON_DPAD_LEFT -> this.handleLeftRight(client.gui.screen(), false);
+                    case BUTTON_DPAD_RIGHT -> this.handleLeftRight(client.gui.screen(), true);
                 }
                 if (MidnightControlsConfig.wasdScreens.contains(client.gui.screen().getClass().getCanonicalName())) {
                     switch (storage.button) {
-                        case GLFW_GAMEPAD_BUTTON_DPAD_UP -> pressKeyboardKey(client, GLFW.GLFW_KEY_W);
-                        case GLFW_GAMEPAD_BUTTON_DPAD_DOWN -> pressKeyboardKey(client, GLFW.GLFW_KEY_S);
-                        case GLFW_GAMEPAD_BUTTON_DPAD_LEFT -> pressKeyboardKey(client, GLFW.GLFW_KEY_A);
-                        case GLFW_GAMEPAD_BUTTON_DPAD_RIGHT -> pressKeyboardKey(client, GLFW.GLFW_KEY_D);
+                        case BUTTON_DPAD_UP -> pressKeyboardKey(client, KeyCodes.W);
+                        case BUTTON_DPAD_DOWN -> pressKeyboardKey(client, KeyCodes.S);
+                        case BUTTON_DPAD_LEFT -> pressKeyboardKey(client, KeyCodes.A);
+                        case BUTTON_DPAD_RIGHT -> pressKeyboardKey(client, KeyCodes.D);
                     }
                 }
                 return;
             }
         }
         else {
-            if (storage.button == GLFW.GLFW_GAMEPAD_BUTTON_A && client.gui.screen() != null) {
+            if (storage.button == GamepadConstants.BUTTON_A && client.gui.screen() != null) {
                 if (this.actionGuiCooldown == 0) {
                     var focused = client.gui.screen().getFocused();
                     if (focused != null && isScreenInteractive(client.gui.screen())) {
@@ -392,19 +394,19 @@ public class MidnightInput {
             }
         }
 
-        if (storage.button == GLFW.GLFW_GAMEPAD_BUTTON_A && client.gui.screen() != null && !isScreenInteractive(client.gui.screen())
+        if (storage.button == GamepadConstants.BUTTON_A && client.gui.screen() != null && !isScreenInteractive(client.gui.screen())
                 && this.actionGuiCooldown == 0) {
             if (client.gui.screen() instanceof AbstractContainerScreen<?> handledScreen && ((HandledScreenAccessor) handledScreen).midnightcontrols$getSlotAt(
                     client.mouseHandler.xpos() * (double) client.getWindow().getGuiScaledWidth() / (double) client.getWindow().getScreenWidth(),
                     client.mouseHandler.ypos() * (double) client.getWindow().getGuiScaledHeight() / (double) client.getWindow().getScreenHeight()) != null) return;
             if (!this.ignoreNextARelease && client.gui.screen() != null) {
                 var accessor = (MouseAccessor) client.mouseHandler;
-                accessor.midnightcontrols$onCursorPos(client.getWindow().handle(), client.mouseHandler.xpos(), client.mouseHandler.ypos());
+                MouseUtil.onCursorPos(client, client.mouseHandler.xpos(), client.mouseHandler.ypos());
                 switch (storage.state) {
                     // Button pressed
-                    case PRESS -> accessor.midnightcontrols$onMouseButton(client.getWindow().handle(), new MouseButtonInfo(GLFW_MOUSE_BUTTON_LEFT, 0), 1);
+                    case PRESS -> accessor.midnightcontrols$onMouseButton(client.getWindow().handle(), new MouseButtonInfo(KeyCodes.MOUSE_BUTTON_LEFT, 0), KeyCodes.PRESS);
                     case RELEASE -> { // Button released
-                        accessor.midnightcontrols$onMouseButton(client.getWindow().handle(), new MouseButtonInfo(GLFW_MOUSE_BUTTON_LEFT, 0), 0);
+                        accessor.midnightcontrols$onMouseButton(client.getWindow().handle(), new MouseButtonInfo(KeyCodes.MOUSE_BUTTON_LEFT, 0), KeyCodes.RELEASE);
                         client.gui.screen().setDragging(false);
                     }
                     case REPEAT -> client.gui.screen().setDragging(true); // Button held down / dragging
@@ -414,15 +416,15 @@ public class MidnightInput {
                 this.ignoreNextARelease = false;
             }
         }
-        else if (storage.button == GLFW.GLFW_GAMEPAD_BUTTON_X && client.gui.screen() != null && !isScreenInteractive(client.gui.screen())
+        else if (storage.button == GamepadConstants.BUTTON_X && client.gui.screen() != null && !isScreenInteractive(client.gui.screen())
                 && this.actionGuiCooldown == 0) {
             double mouseX = client.mouseHandler.xpos() * (double) client.getWindow().getGuiScaledWidth() / (double) client.getWindow().getScreenWidth();
             double mouseY = client.mouseHandler.ypos() * (double) client.getWindow().getGuiScaledHeight() / (double) client.getWindow().getScreenHeight();
             if (client.gui.screen() instanceof AbstractContainerScreen<?> handledScreen && ((HandledScreenAccessor) handledScreen).midnightcontrols$getSlotAt(
                     mouseX, mouseY) != null) return;
             if (!this.ignoreNextXRelease && client.gui.screen() != null) {
-                if (storage.state == ButtonState.PRESS) client.gui.screen().mouseClicked(new MouseButtonEvent(mouseX, mouseY, new MouseButtonInfo(GLFW.GLFW_MOUSE_BUTTON_2, 1)), false);
-                else if (storage.state == ButtonState.RELEASE) client.gui.screen().mouseReleased(new MouseButtonEvent(mouseX, mouseY, new MouseButtonInfo(GLFW.GLFW_MOUSE_BUTTON_2, 0)));
+                if (storage.state == ButtonState.PRESS) client.gui.screen().mouseClicked(new MouseButtonEvent(mouseX, mouseY, new MouseButtonInfo(KeyCodes.MOUSE_BUTTON_RIGHT, 1)), false);
+                else if (storage.state == ButtonState.RELEASE) client.gui.screen().mouseReleased(new MouseButtonEvent(mouseX, mouseY, new MouseButtonInfo(KeyCodes.MOUSE_BUTTON_RIGHT, 0)));
                 this.screenCloseCooldown = 5;
             } else {
                 this.ignoreNextXRelease = false;
@@ -522,7 +524,7 @@ public class MidnightInput {
     private boolean handleScreenScrolling(Screen screen, AxisStorage storage) {
         if (screen == null) return false;
         // @TODO allow rebinding to left stick
-        int preferredAxis = true ? GLFW_GAMEPAD_AXIS_RIGHT_Y : GLFW_GAMEPAD_AXIS_LEFT_Y;
+        int preferredAxis = true ? AXIS_RIGHT_Y : AXIS_LEFT_Y;
 
         if (this.controlsInput != null && this.controlsInput.getFocusedBinding() != null) {
             if (storage.buttonState != ButtonState.NONE && !this.controlsInput.getCurrentButtons().contains(storage.getButtonId(storage.buttonState == ButtonState.PRESS))) {
@@ -548,10 +550,10 @@ public class MidnightInput {
                     return true;
                 }
             } else if (screen instanceof AdvancementsScreen advancementsScreen) {
-                if (storage.axis == GLFW_GAMEPAD_AXIS_RIGHT_X || storage.axis == GLFW_GAMEPAD_AXIS_RIGHT_Y) {
+                if (storage.axis == AXIS_RIGHT_X || storage.axis == AXIS_RIGHT_Y) {
                     var accessor = (AdvancementsScreenAccessor) advancementsScreen;
                     AdvancementTab tab = accessor.getSelectedTab();
-                    tab.scroll(storage.axis == GLFW_GAMEPAD_AXIS_RIGHT_X ? -storage.value * 1.0 : 0.0, storage.axis == GLFW_GAMEPAD_AXIS_RIGHT_Y ? -storage.value * 5.0 : 0.0);
+                    tab.scroll(storage.axis == AXIS_RIGHT_X ? -storage.value * 1.0 : 0.0, storage.axis == AXIS_RIGHT_Y ? -storage.value * 5.0 : 0.0);
                     return true;
                 }
             } else {
@@ -562,11 +564,11 @@ public class MidnightInput {
                 } else if (isScreenInteractive(screen)) {
                     if (joystickCooldown == 0) {
                         switch (storage.axis) {
-                            case GLFW_GAMEPAD_AXIS_LEFT_Y -> {
+                            case AXIS_LEFT_Y -> {
                                 this.changeFocus(screen, storage.value > 0 ? ScreenDirection.UP : ScreenDirection.DOWN);
                                 joystickCooldown = 4;
                             }
-                            case GLFW_GAMEPAD_AXIS_LEFT_X -> {
+                            case AXIS_LEFT_X -> {
                                 this.handleLeftRight(screen, storage.value > 0);
                                 joystickCooldown = 4;
                             }
@@ -646,7 +648,7 @@ public class MidnightInput {
         } else if (PlatformFunctions.isModLoaded("yet-another-config-lib") && YACLCompat.handleAButton(screen, focused)) {
             return true;
         }
-        else pressKeyboardKey(screen, GLFW_KEY_ENTER);
+        else pressKeyboardKey(screen, KeyCodes.ENTER);
         return false;
     }
 
@@ -682,7 +684,7 @@ public class MidnightInput {
             }
             case AbstractSliderButton slider -> {
                 if (slider.active) {
-                    slider.keyPressed(new KeyEvent(right ? 262 : 263, 0, 0));
+                    slider.keyPressed(new KeyEvent(right ? KeyCodes.RIGHT : KeyCodes.LEFT, 0, 0));
                     this.actionGuiCooldown = 2; // Prevent to press too quickly the focused element, so we have to skip 5 ticks.
                     return true;
                 }
@@ -709,7 +711,7 @@ public class MidnightInput {
      * @param storage the state of the provided axis
      */
     public void handleLook(AxisStorage storage) {
-        if (client.player == null || !(storage.axis == GLFW_GAMEPAD_AXIS_RIGHT_Y || storage.axis == GLFW_GAMEPAD_AXIS_RIGHT_X)) return;
+        if (client.player == null || !(storage.axis == AXIS_RIGHT_Y || storage.axis == AXIS_RIGHT_X)) return;
         // Handles the look direction.
         if (MidnightControlsConfig.cameraMode == CameraMode.FLAT) handleFlatLook(storage);
         else handleAdaptiveLook(storage);
@@ -719,12 +721,12 @@ public class MidnightInput {
         if (storage.polarity != AxisStorage.Polarity.ZERO) {
             double rotation = Math.pow(storage.value, 2.0) * 0.11D * storage.polarity.multiplier;
 
-            if (storage.axis == GLFW_GAMEPAD_AXIS_RIGHT_Y) this.targetPitch = rotation * MidnightControlsConfig.getRightYAxisSign() * MidnightControlsConfig.yAxisRotationSpeed / 2;
+            if (storage.axis == AXIS_RIGHT_Y) this.targetPitch = rotation * MidnightControlsConfig.getRightYAxisSign() * MidnightControlsConfig.yAxisRotationSpeed / 2;
             else this.targetYaw = rotation * MidnightControlsConfig.getRightXAxisSign() * MidnightControlsConfig.rotationSpeed / 2;
         }
     }
     private void handleAdaptiveLook(AxisStorage storage) {
-        if (storage.axis == GLFW_GAMEPAD_AXIS_RIGHT_X) {
+        if (storage.axis == AXIS_RIGHT_X) {
             xValue = storage.value;
             xPolarity = storage.polarity;
         }
@@ -760,7 +762,7 @@ public class MidnightInput {
         if (storage.polarity != AxisStorage.Polarity.ZERO) {
             double rotation = storage.value * 0.11D * MidnightControlsConfig.touchSpeed/5;
 
-            if (storage.axis == GLFW_GAMEPAD_AXIS_RIGHT_Y) this.targetPitch = rotation;
+            if (storage.axis == AXIS_RIGHT_Y) this.targetPitch = rotation;
             else this.targetYaw = rotation;
         }
     }
@@ -775,10 +777,10 @@ public class MidnightInput {
                 return true;
             }
             switch (direction) {
-                case UP -> pressKeyboardKey(screen, GLFW.GLFW_KEY_UP);
-                case DOWN -> pressKeyboardKey(screen, GLFW.GLFW_KEY_DOWN);
-                case LEFT -> pressKeyboardKey(screen, GLFW.GLFW_KEY_LEFT);
-                case RIGHT -> pressKeyboardKey(screen, GLFW.GLFW_KEY_RIGHT);
+                case UP -> pressKeyboardKey(screen, KeyCodes.UP);
+                case DOWN -> pressKeyboardKey(screen, KeyCodes.DOWN);
+                case LEFT -> pressKeyboardKey(screen, KeyCodes.LEFT);
+                case RIGHT -> pressKeyboardKey(screen, KeyCodes.RIGHT);
             }
             this.actionGuiCooldown = 5;
             return true;

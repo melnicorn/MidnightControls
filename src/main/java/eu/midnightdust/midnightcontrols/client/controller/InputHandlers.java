@@ -34,12 +34,11 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
 import org.jetbrains.annotations.NotNull;
-import org.lwjgl.glfw.GLFW;
 
 import java.util.Optional;
+import eu.midnightdust.midnightcontrols.client.util.KeyCodes;
 
 import static eu.midnightdust.midnightcontrols.client.MidnightControlsClient.client;
-import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_2;
 
 /**
  * Represents some input handlers.
@@ -185,7 +184,7 @@ public class InputHandlers {
                 slotId = slot.index;
             }
             var actionType = ContainerInput.PICKUP;
-            int clickData = GLFW.GLFW_MOUSE_BUTTON_1;
+            int clickData = KeyCodes.MOUSE_BUTTON_LEFT;
 
             MidnightControlsClient.input.inventoryInteractionCooldown = 5;
             switch (button.getName()) {
@@ -196,7 +195,7 @@ public class InputHandlers {
                     }
                 }
                 case "take" -> {
-                    clickData = GLFW_MOUSE_BUTTON_2;
+                    clickData = KeyCodes.MOUSE_BUTTON_RIGHT;
                 }
                 case "quick_move" -> {
                     actionType = ContainerInput.QUICK_MOVE;
