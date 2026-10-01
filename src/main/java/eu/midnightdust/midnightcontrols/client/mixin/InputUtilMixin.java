@@ -17,7 +17,12 @@ public abstract class InputUtilMixin {
      * unresponsive and the player not understanding why. This overwrite preserves the user's mouse preferences,
      * while not interfering with eye tracking, and the two modes can be switched between during a play session.
      */
+    //? if >=26.3 {
+    /*// 26.3 (SDL3): raw mouse input is a GLFW concept; if the method is gone, skip the injection instead of crashing.
+    @Inject(method = "isRawMouseInputSupported", at = @At("HEAD"), cancellable = true, require = 0)
+    *///?} else {
     @Inject(method = "isRawMouseInputSupported", at = @At("HEAD"), cancellable = true)
+    //?}
     private static void setRawMouseMotionSupported(CallbackInfoReturnable<Boolean> cir) {
         if (MidnightControlsConfig.eyeTrackerAsMouse) cir.setReturnValue(false);
     }

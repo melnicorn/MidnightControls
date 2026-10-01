@@ -23,7 +23,6 @@ import net.minecraft.world.item.ItemUseAnimation;
 import net.minecraft.world.item.ThrowablePotionItem;
 import eu.midnightdust.midnightcontrols.client.touch.TouchInput;
 import eu.midnightdust.midnightcontrols.client.touch.TouchUtils;
-import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -35,9 +34,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import eu.midnightdust.midnightcontrols.client.mouse.EyeTrackerHandler;
 
 import static eu.midnightdust.midnightcontrols.client.MidnightControlsConfig.doMixedInput;
-import static org.lwjgl.glfw.GLFW.*;
 
 import com.mojang.blaze3d.Blaze3D;
+import eu.midnightdust.midnightcontrols.client.controller.backend.InputBackend;
+import eu.midnightdust.midnightcontrols.client.controller.backend.InputBackends;
+import eu.midnightdust.midnightcontrols.client.util.KeyCodes;
 
 /**
  * Adds extra access to the mouse.
@@ -70,10 +71,10 @@ public abstract class MouseMixin implements MouseAccessor {
     @Inject(method = "onButton", at = @At(value = "HEAD"), cancellable = true)
     private void midnightcontrols$onMouseButton(long window, MouseButtonInfo input, int action, CallbackInfo ci) {
         if (window != this.minecraft.getWindow().handle()) return;
-        if (action == 1 && input.button() == GLFW.GLFW_MOUSE_BUTTON_4 && minecraft.gui.screen() != null) {
+        if (action == 1 && input.button() == KeyCodes.MOUSE_BUTTON_BACK && minecraft.gui.screen() != null) {
             MidnightControlsClient.input.tryGoBack(minecraft.gui.screen());
         }
-        else if ((minecraft.gui.screen() == null && doMixedInput() || minecraft.gui.screen() instanceof TouchscreenOverlay) && minecraft.player != null && input.button() == GLFW_MOUSE_BUTTON_1) {
+        else if ((minecraft.gui.screen() == null && doMixedInput() || minecraft.gui.screen() instanceof TouchscreenOverlay) && minecraft.player != null && input.button() == KeyCodes.MOUSE_BUTTON_LEFT) {
             double mouseX = xpos / minecraft.getWindow().getGuiScale();
             double mouseY = ypos / minecraft.getWindow().getGuiScale();
             int centerX = minecraft.getWindow().getGuiScaledWidth() / 2;
@@ -144,11 +145,17 @@ public abstract class MouseMixin implements MouseAccessor {
                         stack.getUseAnimation() == ItemUseAnimation.SPEAR || stack.getItem() instanceof ThrowablePotionItem));
     }
 
+    //? if >=26.3 {
+    /*// 26.3 (SDL3): the cursor-grab helper lost its GLFW int cursor mode, so match it by name only and tolerate
+    // its absence (require = 0) instead of crashing; mixed input / eye tracking then simply keeps the grabbed cursor.
+    @Inject(method = "grabMouse", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/platform/InputConstants;grabOrReleaseMouse", shift = At.Shift.BEFORE), cancellable = true, require = 0)
+    *///?} else {
     @Inject(method = "grabMouse", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/platform/InputConstants;grabOrReleaseMouse(Lcom/mojang/blaze3d/platform/Window;IDD)V",shift = At.Shift.BEFORE), cancellable = true)
+    //?}
     private void midnightcontrols$lockCursor(CallbackInfo ci) {
         if ((doMixedInput() || MidnightControlsConfig.eyeTrackerAsMouse)) {
             //In eye tracking mode, we cannot have the cursor locked to the center.
-            GLFW.glfwSetInputMode(minecraft.getWindow().handle(), GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+            InputBackends.get().setCursorMode(minecraft.getWindow().handle(), InputBackend.CursorMode.HIDDEN);
             //~ if >= 26.2 'minecraft.setScreen(' -> 'minecraft.gui.setScreen('
             minecraft.gui.setScreen(null);
             ignoreFirstMove = true;
