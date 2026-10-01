@@ -1,3 +1,12 @@
+### MidnightControls v1.13.0 (unreleased)
+- Port to Minecraft 26.3 (Fabric only)
+  - Minecraft 26.3 replaced GLFW with SDL3, so controller input, cursor control and controller mappings now go
+    through a small platform abstraction (`InputBackend`) with GLFW (<= 26.2) and SDL3 (>= 26.3) implementations
+  - Saved controller bindings keep their numeric ids; nothing needs to be re-bound
+  - Controllers with back paddles can now bind L4/L5/R4/R5 (SDL3 backend only)
+  - See `docs/PORTING-26.3.md` for the full porting record and test checklist
+- Fix the R5 button label
+
 ### MidnightControls v1.12.1
 - Port to 26.1
 - Compatibility with certain mods needed to temporarily disabled until they're updated
