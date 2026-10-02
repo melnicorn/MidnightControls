@@ -9,6 +9,8 @@
 
 package eu.midnightdust.midnightcontrols.client.util;
 
+import net.minecraft.client.input.KeyEvent;
+
 //
  // Keyboard / mouse codes in the numbering the current Minecraft version uses for {@code KeyEvent},
  // {@code MouseButtonInfo} and {@code KeyMapping}.
@@ -67,4 +69,16 @@ public final class KeyCodes {
     public static final int PRESS = org.lwjgl.glfw.GLFW.GLFW_PRESS;                           // 1
     public static final int RELEASE = org.lwjgl.glfw.GLFW.GLFW_RELEASE;                       // 0
     //?}
+
+    // Builds a synthetic key event for one of the codes above.
+    // Since 26.3 KeyEvent is (scancode, SDL keycode, modifiers) and Screen#keyPressed matches arrow/tab navigation
+    // on the keycode (shortcutKey()), so it has to be filled in; before 26.3 the second field is the scancode and
+    // the mod never needed it.
+    public static KeyEvent keyEvent(int key) {
+        //? if >=26.3 {
+        /*return new KeyEvent(key, org.lwjgl.sdl.SDLKeyboard.SDL_GetKeyFromScancode(key, (short) 0, false), 0);
+        *///?} else {
+        return new KeyEvent(key, 0, 0);
+        //?}
+    }
 }

@@ -89,7 +89,7 @@ import static eu.midnightdust.midnightcontrols.client.controller.GamepadConstant
 //~ if >= 26.2 'client.screen' -> 'client.gui.screen()' {
 public class MidnightInput {
     public static final Map<Integer, Integer> BUTTON_COOLDOWNS = new HashMap<>();
-    public static final KeyEvent ENTER_KEY_INPUT = new KeyEvent(KeyCodes.ENTER, 0, 0);
+    public static final KeyEvent ENTER_KEY_INPUT = KeyCodes.keyEvent(KeyCodes.ENTER);
     // Cooldowns
     public int actionGuiCooldown = 0;
     public int joystickCooldown = 0;
@@ -684,7 +684,7 @@ public class MidnightInput {
             }
             case AbstractSliderButton slider -> {
                 if (slider.active) {
-                    slider.keyPressed(new KeyEvent(right ? KeyCodes.RIGHT : KeyCodes.LEFT, 0, 0));
+                    slider.keyPressed(KeyCodes.keyEvent(right ? KeyCodes.RIGHT : KeyCodes.LEFT));
                     this.actionGuiCooldown = 2; // Prevent to press too quickly the focused element, so we have to skip 5 ticks.
                     return true;
                 }
@@ -819,10 +819,10 @@ public class MidnightInput {
     }
 
     public void pressKeyboardKey(Minecraft client, int key) {
-        ((KeyboardAccessor) client.keyboardHandler).midnightcontrols$onKey(client.getWindow().handle(), 1, new KeyEvent(key, 0, 0));
+        ((KeyboardAccessor) client.keyboardHandler).midnightcontrols$onKey(client.getWindow().handle(), 1, KeyCodes.keyEvent(key));
     }
     public void pressKeyboardKey(Screen screen, int key) {
-        screen.keyPressed(new KeyEvent(key, 0, 0));
+        screen.keyPressed(KeyCodes.keyEvent(key));
     }
 }
 //~}

@@ -48,5 +48,13 @@ stonecutter parameters {
             direction = eval(current.version, ">=26.1")
             replace("net.minecraft.client.gui.render.state", "net.minecraft.client.renderer.state.gui")
         }
+        string {
+            direction = eval(current.version, ">=26.3")
+            replace("com.mojang.blaze3d.pipeline.RenderPipeline", "com.mojang.renderpearl.api.pipeline.RenderPipeline")
+        }
+        string {
+            direction = eval(current.version, ">=26.3")
+            replace("InputConstants.Type.KEYSYM", "InputConstants.Type.KEYBOARD")
+        }
     }
 }

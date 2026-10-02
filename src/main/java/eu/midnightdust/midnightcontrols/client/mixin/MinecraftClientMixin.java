@@ -134,10 +134,17 @@ public abstract class MinecraftClientMixin {
                     var result = this.gameMode.useItemOn(this.player, hand, hitResult);
                     if (result.consumesAction()) {
                         //if (result.shouldSwingHand()) {
+                            //? if >=26.3 {
+                            /*this.player.swing(hand, stackInHand.getInteractAnimation(), false);
+                            if (!stackInHand.isEmpty() && (stackInHand.getCount() != previousStackCount || this.player.hasInfiniteMaterials())) {
+                                this.player.itemUsed(hand);
+                            }
+                            *///?} else {
                             this.player.swing(hand);
                             if (!stackInHand.isEmpty() && (stackInHand.getCount() != previousStackCount || this.player.hasInfiniteMaterials())) {
                                 this.gameRenderer.itemInHandRenderer.itemUsed(hand);
                             }
+                            //?}
                         //}
 
                         ci.cancel();

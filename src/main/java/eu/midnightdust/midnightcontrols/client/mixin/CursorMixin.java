@@ -11,7 +11,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(CursorType.class)
 public abstract class CursorMixin {
     @Inject(method = "select", at = @At("TAIL"))
+    //? if >=26.3 {
+    /*public void midnightcontrols$applyCursorStyle(CallbackInfo ci) {
+    *///?} else {
     public void midnightcontrols$applyCursorStyle(Window window, CallbackInfo ci) {
+    //?}
         CursorRenderer.currentCursorStyle = ((CursorType) (Object) this);
     }
 }

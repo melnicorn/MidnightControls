@@ -218,9 +218,16 @@ public class TouchscreenOverlay extends Screen {
                 },0, 160, 20, WIDGETS_LOCATION));
         // Drop
         this.addRenderableWidget(this.dropButton = new SilentTexturedButtonWidget(Position.of(swapHandsX, sneakButtonY + 5 + 20), 20, 20, Component.empty(), btn -> {
+            //? if >=26.3 {
+            /*// dropItem swings the hand itself when something was dropped
+            if (btn.isActive() && !minecraft.player.isSpectator()) {
+                minecraft.gameMode.dropItem(minecraft.player, false);
+            }
+            *///?} else {
             if (btn.isActive() && !minecraft.player.isSpectator() && minecraft.player.drop(false)) {
                 minecraft.player.swing(InteractionHand.MAIN_HAND);
             }
+            //?}
         }, 20, 160, 20, WIDGETS_LOCATION));
         // Use
         this.addRenderableWidget(this.useButton = new ItemUseButtonWidget(Position.of(width/2-25, height - 70), 50, 17, Component.translatable(MidnightControlsConstants.NAMESPACE+".action.eat"), btn ->

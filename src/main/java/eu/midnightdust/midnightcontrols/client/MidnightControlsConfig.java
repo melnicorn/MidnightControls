@@ -11,6 +11,7 @@ package eu.midnightdust.midnightcontrols.client;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+//~ if >=26.3 'com.mojang.blaze3d.platform.GLX' -> 'net.minecraft.client.gui.components.debug.DebugEntrySystemSpecs'
 import com.mojang.blaze3d.platform.GLX;
 import eu.midnightdust.lib.config.EntryInfo;
 import eu.midnightdust.lib.config.MidnightConfig;
@@ -542,6 +543,7 @@ public class MidnightControlsConfig extends MidnightConfig {
         String name = getController().getName().toLowerCase();
         if (containsAny(name, "xbox 360")) return ControllerType.XBOX_360;
         else if (containsAny(name, "xbox") || name.contains("afterglow")) return ControllerType.XBOX;
+        //~ if >=26.3 'GLX._getCpuInfo()' -> 'DebugEntrySystemSpecs.getCpuInfo()'
         else if (containsAny(name, "steam") && GLX._getCpuInfo().contains("AMD Custom APU")) return ControllerType.STEAM_DECK;
         else if (containsAny(name, "steam")) return ControllerType.STEAM_CONTROLLER;
         else if (containsAny(name, "dualsense", "ps5")) return ControllerType.DUALSENSE;

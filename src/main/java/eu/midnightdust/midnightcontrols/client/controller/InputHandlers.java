@@ -113,6 +113,7 @@ public class InputHandlers {
                             nextTab = tabs.size() - 1;
                         else if (nextTab >= tabs.size())
                             nextTab = 0;
+                        //~ if >=26.3 'getRootNode().holder()' -> 'getRootAdvancement()'
                         screen.getAdvancementManager().setSelectedTab(tabs.get(nextTab).getRootNode().holder(), true);
                         break;
                     }

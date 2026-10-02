@@ -184,6 +184,12 @@ Mouse buttons and actions:
 Note on the back button: whether 26.3 keeps GLFW's 0-based or SDL's 1-based button numbering inside
 `MouseButtonInfo` is unknown; deriving it from `MOUSE_BUTTON_LEFT` gives the right id in both schemes.
 
+Synthetic key events are built with `KeyCodes.keyEvent(code)`. On 26.3 `KeyEvent` is `(scancode, keycode, modifiers)`
+and `Screen#keyPressed` picks arrow/tab focus navigation from `shortcutKey()`, i.e. the SDL **keycode**
+(`SDLK_UP` = `0x40000052`, ...). Events built as `new KeyEvent(scancode, 0, 0)` therefore did nothing in menus
+(D-pad / left stick navigation was dead); the helper fills the keycode with `SDL_GetKeyFromScancode(scancode, 0, false)`,
+which returns the right values even before SDL's video subsystem is up.
+
 The virtual keyboard (`virtualkeyboard/`, `assets/midnightcontrols/keyboard_layouts/*.json`) stores characters,
 not key codes, and needed no change.
 
@@ -194,6 +200,31 @@ not key codes, and needed no change.
 | `MouseAccessor` | `onMove` invoker is `(long, double, double)` before 26.3 and `(long, double, double, double, double)` from 26.3 (absolute position plus relative motion). Callers go through `MouseUtil.onCursorPos`, which derives the deltas from the previous `xpos()/ypos()`. |
 | `MouseMixin` | cursor hiding via the backend; the `grabMouse` injection targets `InputConstants.grabOrReleaseMouse` by name only and with `require = 0` on 26.3 (its GLFW int descriptor is gone). |
 | `InputUtilMixin` | `isRawMouseInputSupported` injection gets `require = 0` on 26.3 (raw mouse input is a GLFW concept). |
+
+### 6.1 Vanilla API remaps (found on the first real 26.3 compile)
+
+| Old (<= 26.2) | 26.3 | Where |
+|---------------|------|-------|
+| `com.mojang.blaze3d.pipeline.RenderPipeline` | `com.mojang.renderpearl.api.pipeline.RenderPipeline` | `gui/cursor/*` (Stonecutter replacement) |
+| `InputConstants.Type.KEYSYM` | `InputConstants.Type.KEYBOARD` | `MidnightControlsClient` (Stonecutter replacement) |
+| `GLX._getCpuInfo()` | `DebugEntrySystemSpecs.getCpuInfo()` | `MidnightControlsConfig` (Steam Deck detection) |
+| `AdvancementTab.getRootNode().holder()` | `getRootAdvancement()` | `InputHandlers` |
+| `Util.getPlatform().openUri(String)` | `Blaze3D.openUri(URI)` | `MidnightControlsSettingsScreen` |
+| `player.swing(hand)` | `player.swing(hand, stack.getAttack/InteractAnimation(), false)` (as vanilla `Minecraft` does) | `TouchInput`, `MinecraftClientMixin` |
+| `gameRenderer.itemInHandRenderer.itemUsed(hand)` | `player.itemUsed(hand)` | `TouchInput`, `MinecraftClientMixin` |
+| `player.swingingArm` | removed; `player.getUsedItemHand()` | `TouchInput` |
+| `player.drop(false)` + `swing` | `gameMode.dropItem(player, false)` (swings itself) | `TouchscreenOverlay` |
+| `AbstractSignEditScreen.text` (`SignText`), `isFrontText` | `text` is a final `SignText.Mutable` (`setLine`, `asImmutable()`), `slot` is a `SignTextSlot` | `AbstractSignEditScreenMixin` |
+| `CursorType.select(Window)` | `CursorType.select()` | `CursorMixin` (handler signature) |
+| `GameRenderer.renderLevel(DeltaTracker)`, hand pass `renderItemInHand(CameraRenderState, float, Matrix4fc)` | `renderLevel()`; hand pass is `render3dHud(...)` right after the level render | `GameRendererMixin.captureMatrices` now injects before `render3dHud`; locals `projectionMatrix` / `cameraState` unchanged |
+
+Shutdown: 26.3 lets the JVM exit on its own after "Stopping!" and starts a watchdog that crashes the client if it
+does not. The camera `Timer` in `MidnightControlsClient.initClient` was non-daemon and kept the JVM alive, so every
+quit ended in a "Client shutdown from post-main" watchdog crash report. It is now a daemon timer (all versions).
+
+After these, every other mixin target in `midnightcontrols.mixins.json` (fields, methods, `INVOKE` targets and
+`@Local`s) was checked against the 26.3 jar with `javap` and resolves; the dev client reaches the title screen
+with no mixin errors.
 
 Mixins that were **not** changed and whose 26.3 targets could not be verified here: `KeyboardAccessor`
 (`keyPress(long, int, KeyEvent)`), `KeyboardMixin`, `CursorMixin` (`CursorType.select(Window)`), the `@Shadow`

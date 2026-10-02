@@ -90,7 +90,9 @@ public class MidnightControlsClient extends MidnightControls {
 
         int delay = 0; // delay for 0 sec.
         int period = 1; // repeat every 0.001 sec. (1000 times a second)
-        Timer timer = new Timer();
+        // Daemon thread: 26.3 lets the JVM exit on its own after the game stops, and a non-daemon timer would keep it alive
+        // until the shutdown watchdog crashes the client.
+        Timer timer = new Timer("MidnightControls Camera", true);
         timer.scheduleAtFixedRate(new TimerTask() {
             public void run() {
                 MidnightControlsClient.onCameraTick();

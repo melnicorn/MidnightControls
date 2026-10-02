@@ -50,13 +50,21 @@ public class TouchInput {
             if (MidnightControlsConfig.debug) System.out.println(blockHit.getBlockPos().toString());
             if (client.gameMode.continueDestroyBlock(blockHit.getBlockPos(), blockHit.getDirection())) {
                 //client.particleManager.addBlockBreakingParticles(blockHit.getBlockPos(), blockHit.getSide()); // TODO Re-implement block breaking particles!!!
+                //? if >=26.3 {
+                /*client.player.swing(InteractionHand.MAIN_HAND, client.player.getMainHandItem().getAttackAnimation(), false);
+                *///?} else {
                 client.player.swing(InteractionHand.MAIN_HAND);
+                //?}
             } else client.gameMode.stopDestroyBlock();
             firstHitResult = TouchUtils.getTargetedObject(mouseX, mouseY);
         }
         else if (result instanceof EntityHitResult entityHit && firstHitResult instanceof EntityHitResult firstEntity && entityHit.getEntity().getUUID().compareTo(firstEntity.getEntity().getUUID()) == 0) {
             if (client.gameMode.interact(client.player, entityHit.getEntity(), /*? if >= 26.1 {*/ entityHit,/*?}*/ client.player.getUsedItemHand()) == InteractionResult.SUCCESS) {
+                //? if >=26.3 {
+                /*client.player.swing(InteractionHand.MAIN_HAND, client.player.getMainHandItem().getInteractAnimation(), false);
+                *///?} else {
                 client.player.swing(InteractionHand.MAIN_HAND);
+                //?}
             }
             firstHitResult = TouchUtils.getTargetedObject(mouseX, mouseY);
         }
@@ -90,10 +98,18 @@ public class TouchInput {
                     var interaction = client.gameMode.useItemOn(client.player, client.player.getUsedItemHand(), blockHit);
                     if (interaction.consumesAction()) {
                         //if (interaction.shouldSwingHand()) {
+                            //? if >=26.3 {
+                            /*InteractionHand hand = client.player.getUsedItemHand();
+                            client.player.swing(hand, stackInHand.getInteractAnimation(), false);
+                            if (!stackInHand.isEmpty() && (stackInHand.getCount() != previousStackCount || client.player.hasInfiniteMaterials())) {
+                                client.player.itemUsed(hand);
+                            }
+                            *///?} else {
                             client.player.swing(client.player.swingingArm);
                             if (!stackInHand.isEmpty() && (stackInHand.getCount() != previousStackCount || client.player.hasInfiniteMaterials())) {
                                 client.gameRenderer.itemInHandRenderer.itemUsed(client.player.swingingArm);
                             }
+                            //?}
                         //}
                         return true;
                     }
@@ -101,7 +117,11 @@ public class TouchInput {
             }
             if (result instanceof EntityHitResult entityHit) {
                 client.gameMode.attack(client.player, entityHit.getEntity());
+                //? if >=26.3 {
+                /*client.player.swing(InteractionHand.MAIN_HAND, client.player.getMainHandItem().getAttackAnimation(), false);
+                *///?} else {
                 client.player.swing(InteractionHand.MAIN_HAND);
+                //?}
                 return true;
             }
         }
